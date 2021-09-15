@@ -37,22 +37,22 @@ knitr::opts_chunk$set(message = F, warning = F)
 ```
 
 ```{r}
-#install.packages(c(
-#  "tidyverse",
-#  "janitor",
-#  "sf",
-#  "shiny",
-#  "shinycssloaders",
-#  "leaflet",
-#  "RColorBrewer",
-#  "htmltools",
-#  "here",
-#  "Census2016",
-#  "ggspatial",
-#  "tmap"
-#))
+install.packages(c(
+ "tidyverse",
+ "janitor",
+ "sf",
+ "shiny",
+ "shinycssloaders",
+ "leaflet",
+ "RColorBrewer",
+ "htmltools",
+ "here",
+ "Census2016",
+ "ggspatial",
+ "tmap"
+))
 
-#remotes::install_github("wfmackey/absmapsdata")
+remotes::install_github("wfmackey/absmapsdata")
 ```
 
 ```{r libraries}
@@ -98,11 +98,12 @@ population<-Census2016_wide_by_SA2_year %>%
 We use the **absmapsdata** package to get shapefiles of each SA2 across australia. You can find more information on this here: https://github.com/wfmackey/absmapsdata
 
 ```{r}
+glimpse(sa22016)
 aus_shp<-sa22016 %>% 
   rename(gcc_n_2016 = gcc_name_2016,
-         sa2_m_2016 = sa2_main_2016, 
-         sa2_n_2016 = sa2_name_2016, 
-         sa3_n_2016 = sa3_name_2016)
+         s2_m_2016 = sa2_code_2016, # main changed to code, but does not work if changed...
+         s2_n_2016 = sa2_name_2016,
+         s3_n_2016 = sa3_name_2016)
 
 #st_write(aus_shp, here("data/sa22016.shp"))
 ```
@@ -110,7 +111,8 @@ aus_shp<-sa22016 %>%
 The **absmapsdata** package can be hard to load. If you have problems you can also load the data here
 
 ```{r}
-#aus_shp<-st_read(here("data/sa22016.shp"))
+  
+aus_shp<-st_read(here("data/sa22016.shp"))
 ```
 
 Inspecting the output:
@@ -133,8 +135,8 @@ Now let's join the population data to the `shp` data. We will join by the sa2 co
 ```{r}
 pop_shp <- 
   bris %>% 
-  select(sa2_m_2016, sa2_n_2016, sa3_n_2016) %>% 
-  mutate(sa2_code = as.integer(sa2_m_2016)) %>% #changing from character to integer
+  select(s2_m_2016, s2_n_2016, s3_n_2016) %>% 
+  mutate(sa2_code = as.integer(s2_m_2016)) %>% #changing from character to integer
   left_join(population, by = "sa2_code") 
 ```
 
@@ -148,6 +150,7 @@ Before we start mapping, it may be worthwhile to check the Coordinate Reference 
 st_crs(pop_shp)<-4326
 st_transform(pop_shp, 4326)
 ```
+
 ## Workflow 1: The simplest plots
 
 ```{r}
@@ -245,7 +248,7 @@ tm_shape(pop_shp) +
 ```{r}
 tm_shape(pop_shp) +
   tm_fill("persons") +
-  tm_facets(by = "sa3_n_2016")
+  tm_facets(by = "s3_n_2016")
 ```
 
 ```{r}
